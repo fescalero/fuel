@@ -1,0 +1,48 @@
+name: Mine
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '3 */13 * * *'
+    
+jobs:
+  edlaction:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Chek out this repo
+      uses: actions/checkout@v2
+      
+    - name: Miners de Luigi
+      uses: jtschichold/mm-clud-services-miners@v0
+      with:
+        config: ./cloud-services-mining-config.yml
+        configSection: azure
+        
+    - name: Procesado de listas
+      uses: jtschichold/mm-process-ip-list@v0
+      with:
+        list: ./**/*ips.txt
+        filterInPlace: true
+        filterReservedIps: true
+        minIPv4Mast: 8
+        minIpv6Mask: 8
+        filter: ./ip-exclusion-list
+        
+    - name: Chek and update
+      id: chek_canges
+      uses: jtschichold/mm-check-changes@v0
+      with:
+        includeGlob: '**/*.txt'
+        
+    - name: Commit
+      run: |-
+        git config user.name "Automated"
+        git config user.emal ""
+        git status
+        git add -A
+        git status
+        timestamp=$(date -u)
+        git commit -m "    " || exit 0
+        
+        
+      
